@@ -5,7 +5,6 @@
   <title>Cómo llegar - Recíclame Gestión Medioambiental</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Estilos sencillos -->
   <style>
     body {
       font-family: sans-serif;
@@ -27,7 +26,7 @@
       text-decoration: none;
       border-radius: 8px;
       color: #ffffff;
-      background-color: #7ED321; /* verde flúor aproximado */
+      background-color: #7ED321; /* verde flúor */
       width: 80%;
       max-width: 320px;
       box-sizing: border-box;
@@ -35,42 +34,23 @@
     .apple {
       background-color: #000000;
     }
-    #stats {
+    .stats-link {
       margin-top: 25px;
-      padding: 15px;
-      background: #ffffff;
-      border-radius: 10px;
       display: inline-block;
-      text-align: left;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    #stats h2 {
-      margin-top: 0;
-      text-align: center;
-    }
-    #stats p {
-      margin: 6px 0;
       font-size: 14px;
+      color: #555;
+      text-decoration: none;
     }
-    #stats span {
-      font-weight: bold;
+    .stats-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
+
 <body>
- <h1>¿Cómo llegar?</h1>
-  <p>Recíclame Gestión Medioambiental</p>
+  <h1>¿Cómo llegar?</h1>
+  <p><strong>Recíclame Gestión Medioambiental</strong></p>
   <p>C/ Seúl, 14, Humanes de Madrid, Madrid, 28970</p>
-    <h1>HORARIO</h1>
-    <h2>Lunes a viernes</h2>
-      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
-    <h2>Sabados</h2>
-      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
-   <h1>Dias CERRADOS</h1>
-    <h2>Diciembre</h2>
-      <h3>6, 8, 24, 25, 26, 27 y 31</h3>
-   <h2>Enero</h2>
-      <h3>1, 2 3 y 6</h3>
 
   <!-- Botón Google Maps -->
   <a
@@ -94,17 +74,11 @@
     Abrir en Apple Maps
   </a>
 
-  <!-- Bloque de estadísticas visibles -->
-  <div id="stats">
-    <h2>Estadísticas</h2>
-    <p>Visitas a esta página: <span id="visits-count">–</span></p>
-    <p>Clics en Google Maps: <span id="google-count">–</span></p>
-    <p>Clics en Apple Maps: <span id="apple-count">–</span></p>
-  </div>
+  <!-- Enlace al panel de estadísticas -->
+  <a href="./stats.html" class="stats-link">Ver estadísticas de uso →</a>
 
-  <!-- Firebase + Firestore (vía CDN, modo módulo) -->
+  <!-- Firebase + Firestore -->
   <script type="module">
-    // Importar SDKs desde CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore,
@@ -115,7 +89,6 @@
       increment
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDpY0Hqd_IU88ilrPK0da92U_mvPAcTYIg",
       authDomain: "qr-reciclame.firebaseapp.com",
@@ -125,90 +98,48 @@
       appId: "1:801108546220:web:f8519a5596dc0ef0384509"
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Referencia al documento de contadores en Firestore
     const countersRef = doc(db, "metrics", "counters");
 
-    // Referencias a elementos del DOM
-    const visitsSpan = document.getElementById("visits-count");
-    const googleSpan = document.getElementById("google-count");
-    const appleSpan = document.getElementById("apple-count");
     const btnGoogle = document.getElementById("btn-google");
     const btnApple = document.getElementById("btn-apple");
 
-    // Objeto para llevar los valores en memoria
-    let currentCounts = { visits: 0, google: 0, apple: 0 };
+    let current = { visits: 0, google: 0, apple: 0 };
 
     async function initCounters() {
       try {
         const snap = await getDoc(countersRef);
 
         if (!snap.exists()) {
-          // Si no existe el documento, lo creamos con contadores a 0
           await setDoc(countersRef, {
-            visits: 0,
-            google: 0,
-            apple: 0
+            visits: 0, google: 0, apple: 0
           });
-          currentCounts = { visits: 0, google: 0, apple: 0 };
+          current = { visits: 0, google: 0, apple: 0 };
         } else {
-          currentCounts = snap.data();
+          current = snap.data();
         }
 
-        // Al cargar la página, incrementamos visitas
-        await updateDoc(countersRef, {
-          visits: increment(1)
-        });
-
-        // Actualizamos los valores visibles (sumamos 1 al local de visitas)
-        currentCounts.visits = (currentCounts.visits || 0) + 1;
-
-        visitsSpan.textContent = currentCounts.visits;
-        googleSpan.textContent = currentCounts.google || 0;
-        appleSpan.textContent = currentCounts.apple || 0;
+        // Incrementa visitas pero NO lo muestra en pantalla
+        await updateDoc(countersRef, { visits: increment(1) });
 
       } catch (error) {
         console.error("Error inicializando contadores:", error);
-        visitsSpan.textContent = "Error";
-        googleSpan.textContent = "Error";
-        appleSpan.textContent = "Error";
       }
     }
 
-    async function incrementField(field) {
-      try {
-        await updateDoc(countersRef, {
-          [field]: increment(1)
-        });
-      } catch (error) {
-        console.error("Error incrementando campo", field, error);
-      }
+    function incrementClick(type) {
+      updateDoc(countersRef, { [type]: increment(1) }).catch(err =>
+        console.error("Error al incrementar", type, err)
+      );
     }
 
-    // Listeners de los botones
-    if (btnGoogle) {
-      btnGoogle.addEventListener("click", () => {
-        // Incrementamos contador en Firestore
-        incrementField("google");
-        // Actualizamos el valor mostrado sin esperar respuesta
-        currentCounts.google = (currentCounts.google || 0) + 1;
-        googleSpan.textContent = currentCounts.google;
-      });
-    }
+    btnGoogle.addEventListener("click", () => incrementClick("google"));
+    btnApple.addEventListener("click", () => incrementClick("apple"));
 
-    if (btnApple) {
-      btnApple.addEventListener("click", () => {
-        incrementField("apple");
-        currentCounts.apple = (currentCounts.apple || 0) + 1;
-        appleSpan.textContent = currentCounts.apple;
-      });
-    }
-
-    // Iniciar lógica al cargar la página
     initCounters();
   </script>
+
 </body>
 </html>
