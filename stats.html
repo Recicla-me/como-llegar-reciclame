@@ -5,6 +5,11 @@
   <title>Estadísticas QR - Recíclame</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Chart.js para gráficas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS para exportar a Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -12,90 +17,30 @@
       color: #f9fafb;
       margin: 0;
       padding: 20px;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
     }
     .container {
       background: #020617;
       border-radius: 20px;
-      padding: 24px;
-      max-width: 900px;
+      padding: 20px;
+      max-width: 1100px;
       width: 100%;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
       border: 1px solid rgba(148,163,184,0.2);
     }
     h1 {
-      margin-top: 0;
+      margin: 0 0 4px 0;
       text-align: center;
       font-size: 24px;
-      margin-bottom: 4px;
     }
     .subtitle {
       text-align: center;
-      font-size: 14px;
-      color: #9ca3af;
-      margin-bottom: 24px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .card {
-      background: #020617;
-      border-radius: 16px;
-      padding: 16px 18px;
-      border: 1px solid rgba(148,163,184,0.3);
-    }
-    .label {
-      font-size: 14px;
-      color: #9ca3af;
-      margin-bottom: 6px;
-    }
-    .value {
-      font-size: 32px;
-      font-weight: 700;
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-    .value span {
-      font-size: 14px;
-      font-weight: 400;
-      color: #9ca3af;
-    }
-    .tag {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      border: 1px solid rgba(148,163,184,0.4);
-      color: #e5e7eb;
-      margin-top: 6px;
-    }
-    .tag.green {
-      border-color: #22c55e;
-      color: #bbf7d0;
-    }
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      color: #6b7280;
-      margin-top: 10px;
-    }
-    .status {
-      text-align: center;
       font-size: 13px;
-      margin-bottom: 12px;
       color: #9ca3af;
-    }
-    .status.error {
-      color: #fecaca;
+      margin-bottom: 16px;
     }
     .pill {
       display: inline-flex;
@@ -107,53 +52,140 @@
       border: 1px solid rgba(45,212,191,0.4);
       font-size: 11px;
       color: #a5f3fc;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
-    .back-link {
-      display: inline-block;
-      margin-bottom: 12px;
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: #020617;
+      color: #e5e7eb;
       font-size: 12px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #111827;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .full-width {
+      margin-top: 16px;
+    }
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid rgba(148,163,184,0.3);
+    }
+    .card h2 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+    .status {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+    .status.error {
+      color: #fecaca;
+    }
+    canvas {
+      max-height: 260px;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .stats-table th,
+    .stats-table td {
+      padding: 4px 6px;
+      border-bottom: 1px solid rgba(55,65,81,0.7);
+      text-align: right;
+    }
+    .stats-table th:first-child,
+    .stats-table td:first-child {
+      text-align: left;
+    }
+    .footer {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 11px;
+      color: #6b7280;
+    }
+    a.back-link {
+      font-size: 11px;
       color: #a5b4fc;
       text-decoration: none;
     }
-    .back-link:hover {
+    a.back-link:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <a class="back-link" href="./">← Volver a la página del QR</a>
-
-    <div class="pill">
-      🔒 Panel de solo lectura · Datos en vivo desde Firebase
+    <div class="top-bar">
+      <div>
+        <div class="pill">🔒 Panel interno · Datos en vivo desde Firebase</div>
+        <h1>Estadísticas QR · Recíclame</h1>
+        <div class="subtitle">C/ Seúl, 14 · Humanes de Madrid · Madrid, 28970</div>
+      </div>
+      <div class="buttons">
+        <button id="btn-reload">🔄 Actualizar datos</button>
+        <button id="btn-export">📊 Exportar a Excel</button>
+      </div>
     </div>
 
-    <h1>Estadísticas QR · Recíclame</h1>
-    <div class="subtitle">
-      C/ Seúl, 14 · Humanes de Madrid · Madrid, 28970
-    </div>
-
-    <div id="status" class="status">Cargando datos en tiempo real…</div>
+    <div id="status" class="status">Cargando datos…</div>
 
     <div class="grid">
       <div class="card">
-        <div class="label">Visitas a la página (escaneos del QR)</div>
-        <div class="value" id="visits-value">–</div>
-        <div class="tag green">Total acumulado</div>
+        <h2>Visitas y clics por día</h2>
+        <canvas id="chartDaily"></canvas>
       </div>
-
       <div class="card">
-        <div class="label">Clics en Google Maps</div>
-        <div class="value" id="google-value">–</div>
-        <div class="tag">Google Maps”</div>
+        <h2>Resumen global (acumulado)</h2>
+        <table class="stats-table" id="summary-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Visitas</td><td id="sum-visits">–</td></tr>
+            <tr><td>Clics Google Maps</td><td id="sum-google">–</td></tr>
+            <tr><td>Clics Apple Maps</td><td id="sum-apple">–</td></tr>
+          </tbody>
+        </table>
+        <div class="footer">
+          <a href="./" class="back-link">← Volver a la página del QR</a>
+        </div>
       </div>
+    </div>
 
-      <div class="card">
-        <div class="label">Clics en Apple Maps</div>
-        <div class="value" id="apple-value">–</div>
-        <div class="tag">Apple Maps”</div>
-      </div>
+    <div class="card full-width">
+      <h2>Distribución por horas (hoy)</h2>
+      <canvas id="chartHourly"></canvas>
     </div>
 
     <div class="footer">
@@ -161,16 +193,16 @@
     </div>
   </div>
 
-  <!-- Firebase + Firestore solo lectura -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore,
       doc,
-      getDoc
+      getDoc,
+      getDocs,
+      collection
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // MISMO CONFIG QUE EN index.html
     const firebaseConfig = {
       apiKey: "AIzaSyDpY0Hqd_IU88ilrPK0da92U_mvPAcTYIg",
       authDomain: "qr-reciclame.firebaseapp.com",
@@ -184,41 +216,181 @@
     const db = getFirestore(app);
 
     const statusEl = document.getElementById("status");
-    const visitsEl = document.getElementById("visits-value");
-    const googleEl = document.getElementById("google-value");
-    const appleEl = document.getElementById("apple-value");
+    const sumVisitsEl = document.getElementById("sum-visits");
+    const sumGoogleEl = document.getElementById("sum-google");
+    const sumAppleEl = document.getElementById("sum-apple");
+    const btnReload = document.getElementById("btn-reload");
+    const btnExport = document.getElementById("btn-export");
 
-    async function loadStats() {
+    let dailyData = [];
+    let hourlyData = [];
+    let chartDaily = null;
+    let chartHourly = null;
+
+    function formatHourLabel(id) {
+      // id = YYYY-MM-DD-HH
+      const parts = id.split("-");
+      const hour = parts[3] || "00";
+      return hour + ":00";
+    }
+
+    function sortByDateId(a, b) {
+      return a.id.localeCompare(b.id);
+    }
+
+    function getTodayDateKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    async function loadData() {
+      statusEl.textContent = "Cargando datos…";
+      statusEl.classList.remove("error");
+
       try {
-        const ref = doc(db, "metrics", "counters");
-        const snap = await getDoc(ref);
-
-        if (!snap.exists()) {
-          statusEl.textContent = "No se han encontrado datos todavía.";
-          visitsEl.textContent = "0";
-          googleEl.textContent = "0";
-          appleEl.textContent = "0";
-          return;
+        // Resumen global desde metrics/counters
+        const countersSnap = await getDoc(doc(db, "metrics", "counters"));
+        if (countersSnap.exists()) {
+          const c = countersSnap.data();
+          sumVisitsEl.textContent = c.visits ?? 0;
+          sumGoogleEl.textContent = c.google ?? 0;
+          sumAppleEl.textContent = c.apple ?? 0;
+        } else {
+          sumVisitsEl.textContent = "0";
+          sumGoogleEl.textContent = "0";
+          sumAppleEl.textContent = "0";
         }
 
-        const data = snap.data();
-        visitsEl.textContent = data.visits ?? 0;
-        googleEl.textContent = data.google ?? 0;
-        appleEl.textContent = data.apple ?? 0;
+        // Datos diarios
+        const dailySnap = await getDocs(collection(db, "daily"));
+        dailyData = [];
+        dailySnap.forEach(docSnap => {
+          const data = docSnap.data();
+          dailyData.push({
+            id: docSnap.id,
+            fecha: docSnap.id,
+            visitas: data.visits ?? 0,
+            google: data.google ?? 0,
+            apple: data.apple ?? 0
+          });
+        });
+        dailyData.sort(sortByDateId);
 
+        // Datos horarios (solo hoy para la gráfica)
+        const todayKey = getTodayDateKey();
+        const hourlySnap = await getDocs(collection(db, "hourly"));
+        hourlyData = [];
+        hourlySnap.forEach(docSnap => {
+          if (docSnap.id.startsWith(todayKey)) {
+            const data = docSnap.data();
+            hourlyData.push({
+              id: docSnap.id,
+              periodo: docSnap.id,
+              visitas: data.visits ?? 0,
+              google: data.google ?? 0,
+              apple: data.apple ?? 0
+            });
+          }
+        });
+        hourlyData.sort(sortByDateId);
+
+        renderCharts();
         statusEl.textContent = "Datos cargados correctamente ✅";
-
       } catch (error) {
         console.error("Error al cargar estadísticas:", error);
         statusEl.textContent = "Error al cargar estadísticas desde Firestore.";
         statusEl.classList.add("error");
-        visitsEl.textContent = "—";
-        googleEl.textContent = "—";
-        appleEl.textContent = "—";
       }
     }
 
-    loadStats();
+    function renderCharts() {
+      const dailyLabels = dailyData.map(d => d.fecha);
+      const dailyVisits = dailyData.map(d => d.visitas);
+      const dailyGoogle = dailyData.map(d => d.google);
+      const dailyApple = dailyData.map(d => d.apple);
+
+      // Gráfica diaria
+      const ctxDaily = document.getElementById("chartDaily").getContext("2d");
+      if (chartDaily) chartDaily.destroy();
+      chartDaily = new Chart(ctxDaily, {
+        type: "line",
+        data: {
+          labels: dailyLabels,
+          datasets: [
+            { label: "Visitas", data: dailyVisits },
+            { label: "Clics Google Maps", data: dailyGoogle },
+            { label: "Clics Apple Maps", data: dailyApple }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      // Gráfica horaria (hoy)
+      const hourlyLabels = hourlyData.map(d => formatHourLabel(d.id));
+      const hourlyVisits = hourlyData.map(d => d.visitas);
+      const hourlyGoogle = hourlyData.map(d => d.google);
+      const hourlyApple = hourlyData.map(d => d.apple);
+
+      const ctxHourly = document.getElementById("chartHourly").getContext("2d");
+      if (chartHourly) chartHourly.destroy();
+      chartHourly = new Chart(ctxHourly, {
+        type: "bar",
+        data: {
+          labels: hourlyLabels,
+          datasets: [
+            { label: "Visitas", data: hourlyVisits },
+            { label: "Clics Google Maps", data: hourlyGoogle },
+            { label: "Clics Apple Maps", data: hourlyApple }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function exportToExcel() {
+      const dailySheetData = dailyData.map(row => ({
+        Fecha: row.fecha,
+        Visitas: row.visitas,
+        "Clics Google": row.google,
+        "Clics Apple": row.apple
+      }));
+
+      const hourlySheetData = hourlyData.map(row => ({
+        Periodo: row.periodo,
+        Visitas: row.visitas,
+        "Clics Google": row.google,
+        "Clics Apple": row.apple
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const wsDaily = XLSX.utils.json_to_sheet(dailySheetData);
+      const wsHourly = XLSX.utils.json_to_sheet(hourlySheetData);
+
+      XLSX.utils.book_append_sheet(wb, wsDaily, "Diario");
+      XLSX.utils.book_append_sheet(wb, wsHourly, "Horario");
+
+      XLSX.writeFile(wb, "estadisticas-qr-reciclame.xlsx");
+    }
+
+    btnReload.addEventListener("click", loadData);
+    btnExport.addEventListener("click", exportToExcel);
+
+    loadData();
   </script>
 </body>
 </html>
