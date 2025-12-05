@@ -1,1 +1,56 @@
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cómo llegar - Recíclame Gestión Medioambiental</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .button {
+      display: block;
+      margin: 15px auto;
+      padding: 15px 25px;
+      font-size: 18px;
+      text-decoration: none;
+      border-radius: 8px;
+      color: white;
+      background-color: #007BFF;
+      width: 80%;
+      max-width: 300px;
+    }
+    .apple {
+      background-color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>¿Cómo llegar?</h1>
+  <p>Recíclame Gestión Medioambiental</p>
+  <p>C/ Seúl, 14, Humanes de Madrid, Madrid, 28970</p>
+    <h1>HORARIO</h1>
+    <h2>Lunes a viernes</h2>
+      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
+    <h2>Sabados</h2>
+      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
+   <h1>Dias CERRADOs</h1>
+    <h2>Diciembre</h2>
+      <h3>6, 8, 24, 25, 26, 27 y 31</h3>
+   <h2>Enero</h2>
+      <h3>1, 2 3 y 6</h3>
+  
+  <a class="button" href="https://www.google.es/maps/place/Recíclame/@40.2708415,-3.8137148,16z/data=!3m1!4b1!4m6!3m5!1s0xd418b693c00c327:0xdc1603477d14e5ee!8m2!3d40.2708374!4d-3.8111399!16s%2Fg%2F1q5bpb1zs?hl=es&entry=ttu&g_ep=EgoyMDI1MDcyMy4wIKXMDSoASAFQAw%3D%3D" target="_blank">
+    Abrir en Google Maps
+  </a>
+  <a class="button apple" href="https://maps.apple.com/place?place-id=I783A80EBC813922E&address=Calle+de+Seul%2C+14%2C+28970+Humanes+de+Madrid%2C+Madrid%2C+España&coordinate=40.2709554%2C-3.8110757&name=Recíclame&_provider=9902" target="_blank">
+    Abrir en Apple Maps
+  </a>
+</body>
+</html>
