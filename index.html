@@ -34,33 +34,25 @@
     .apple {
       background-color: #000000;
     }
-    .stats-link {
-      margin-top: 25px;
-      display: inline-block;
-      font-size: 14px;
-      color: #555;
-      text-decoration: none;
-    }
-    .stats-link:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 
 <body>
-   <h1>¿Cómo llegar?</h1>
+  <h1>¿Cómo llegar?</h1>
   <p>Recíclame Gestión Medioambiental</p>
   <p>C/ Seúl, 14, Humanes de Madrid, Madrid, 28970</p>
-    <h1>HORARIO</h1>
-    <h2>Lunes a viernes</h2>
-      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
-    <h2>Sabados</h2>
-      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
-   <h1>Dias CERRADOS</h1>
-    <h2>Diciembre</h2>
-      <h3>6, 8, 24, 25, 26, 27 y 31</h3>
-   <h2>Enero</h2>
-      <h3>1, 2 3 y 6</h3>
+
+  <h1>HORARIO</h1>
+  <h2>Lunes a viernes</h2>
+  <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
+  <h2>Sábados</h2>
+  <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
+
+  <h1>Días CERRADOS</h1>
+  <h2>Diciembre</h2>
+  <h3>6, 8, 24, 25, 26, 27 y 31</h3>
+  <h2>Enero</h2>
+  <h3>1, 2, 3 y 6</h3>
 
   <!-- Botón Google Maps -->
   <a
@@ -83,9 +75,6 @@
   >
     Abrir en Apple Maps
   </a>
-
-  <!-- Enlace al panel de estadísticas -->
-  <a href="./stats.html" class="stats-link">Ver estadísticas de uso →</a>
 
   <!-- Firebase + Firestore -->
   <script type="module">
@@ -112,11 +101,68 @@
     const db = getFirestore(app);
 
     const countersRef = doc(db, "metrics", "counters");
-
     const btnGoogle = document.getElementById("btn-google");
     const btnApple = document.getElementById("btn-apple");
 
-    let current = { visits: 0, google: 0, apple: 0 };
+    function getDateKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`; // p.ej. 2025-12-05
+    }
+
+    function getHourKey() {
+      const now = new Date();
+      const dateKey = getDateKey();
+      const h = String(now.getHours()).padStart(2, "0");
+      return `${dateKey}-${h}`; // p.ej. 2025-12-05-14
+    }
+
+    async function incrementDailyAndHourly(field) {
+      const dateKey = getDateKey();
+      const hourKey = getHourKey();
+
+      const dailyRef = doc(db, "daily", dateKey);
+      const hourlyRef = doc(db, "hourly", hourKey);
+
+      // Función auxiliar
+      async function safeIncrement(ref, fieldName) {
+        try {
+          await updateDoc(ref, { [fieldName]: increment(1) });
+        } catch (error) {
+          if (error.code === "not-found") {
+            // Si no existe el doc, lo creamos con ese campo a 1
+            await setDoc(
+              ref,
+              { visits: 0, google: 0, apple: 0, [fieldName]: 1 },
+              { merge: true }
+            );
+          } else {
+            console.error("Error incrementando", fieldName, "en", ref.path, error);
+          }
+        }
+      }
+
+      await safeIncrement(dailyRef, field);
+      await safeIncrement(hourlyRef, field);
+    }
+
+    async function registerEvent(type) {
+      try {
+        // Métrica global
+        await updateDoc(countersRef, { [type]: increment(1) });
+      } catch (error) {
+        console.error("Error incrementando contador global", type, error);
+      }
+
+      // Métrica diaria + horaria
+      try {
+        await incrementDailyAndHourly(type);
+      } catch (error) {
+        console.error("Error incrementando métricas diarias/horarias", type, error);
+      }
+    }
 
     async function initCounters() {
       try {
@@ -124,29 +170,26 @@
 
         if (!snap.exists()) {
           await setDoc(countersRef, {
-            visits: 0, google: 0, apple: 0
+            visits: 0,
+            google: 0,
+            apple: 0
           });
-          current = { visits: 0, google: 0, apple: 0 };
-        } else {
-          current = snap.data();
         }
 
-        // Incrementa visitas pero NO lo muestra en pantalla
-        await updateDoc(countersRef, { visits: increment(1) });
-
+        // Registrar visita (global + diario + horario)
+        await registerEvent("visits");
       } catch (error) {
         console.error("Error inicializando contadores:", error);
       }
     }
 
-    function incrementClick(type) {
-      updateDoc(countersRef, { [type]: increment(1) }).catch(err =>
-        console.error("Error al incrementar", type, err)
-      );
-    }
+    btnGoogle.addEventListener("click", () => {
+      registerEvent("google");
+    });
 
-    btnGoogle.addEventListener("click", () => incrementClick("google"));
-    btnApple.addEventListener("click", () => incrementClick("apple"));
+    btnApple.addEventListener("click", () => {
+      registerEvent("apple");
+    });
 
     initCounters();
   </script>
