@@ -4,15 +4,20 @@
   <meta charset="UTF-8">
   <title>Cómo llegar - Recíclame Gestión Medioambiental</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Estilos sencillos -->
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      padding: 50px;
+      padding: 30px 15px;
       background-color: #f4f4f4;
     }
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      margin: 5px 0;
     }
     .button {
       display: block;
@@ -21,36 +26,179 @@
       font-size: 18px;
       text-decoration: none;
       border-radius: 8px;
-      color: white;
-      background-color: #007BFF;
+      color: #ffffff;
+      background-color: #7ED321; /* verde flúor aproximado */
       width: 80%;
-      max-width: 300px;
+      max-width: 320px;
+      box-sizing: border-box;
     }
     .apple {
-      background-color: #000;
+      background-color: #000000;
+    }
+    #stats {
+      margin-top: 25px;
+      padding: 15px;
+      background: #ffffff;
+      border-radius: 10px;
+      display: inline-block;
+      text-align: left;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #stats h2 {
+      margin-top: 0;
+      text-align: center;
+    }
+    #stats p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+    #stats span {
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>¿Cómo llegar?</h1>
-  <p>Recíclame Gestión Medioambiental</p>
+  <p><strong>Recíclame Gestión Medioambiental</strong></p>
   <p>C/ Seúl, 14, Humanes de Madrid, Madrid, 28970</p>
-    <h1>HORARIO</h1>
-    <h2>Lunes a viernes</h2>
-      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
-    <h2>Sabados</h2>
-      <h3>de 9:00 a 14:00 - 15:30 a 18:30</h3>
-   <h1>Dias CERRADOs</h1>
-    <h2>Diciembre</h2>
-      <h3>6, 8, 24, 25, 26, 27 y 31</h3>
-   <h2>Enero</h2>
-      <h3>1, 2 3 y 6</h3>
-  
-  <a class="button" href="https://www.google.es/maps/place/Recíclame/@40.2708415,-3.8137148,16z/data=!3m1!4b1!4m6!3m5!1s0xd418b693c00c327:0xdc1603477d14e5ee!8m2!3d40.2708374!4d-3.8111399!16s%2Fg%2F1q5bpb1zs?hl=es&entry=ttu&g_ep=EgoyMDI1MDcyMy4wIKXMDSoASAFQAw%3D%3D" target="_blank">
+
+  <!-- Botón Google Maps -->
+  <a
+    id="btn-google"
+    class="button"
+    href="https://www.google.com/maps?q=Calle+Seúl+14,+Humanes+de+Madrid,+Madrid,+28970"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
     Abrir en Google Maps
   </a>
-  <a class="button apple" href="https://maps.apple.com/place?place-id=I783A80EBC813922E&address=Calle+de+Seul%2C+14%2C+28970+Humanes+de+Madrid%2C+Madrid%2C+España&coordinate=40.2709554%2C-3.8110757&name=Recíclame&_provider=9902" target="_blank">
+
+  <!-- Botón Apple Maps -->
+  <a
+    id="btn-apple"
+    class="button apple"
+    href="https://maps.apple.com/?address=Calle%20Se%C3%BAl,14,28970,Humanes%20de%20Madrid,Madrid,Spain"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
     Abrir en Apple Maps
   </a>
+
+  <!-- Bloque de estadísticas visibles -->
+  <div id="stats">
+    <h2>Estadísticas</h2>
+    <p>Visitas a esta página: <span id="visits-count">–</span></p>
+    <p>Clics en Google Maps: <span id="google-count">–</span></p>
+    <p>Clics en Apple Maps: <span id="apple-count">–</span></p>
+  </div>
+
+  <!-- Firebase + Firestore (vía CDN, modo módulo) -->
+  <script type="module">
+    // Importar SDKs desde CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      increment
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDeJrZYQ8m8UhEtP7lLtOnbfTNyYulac9w",
+      authDomain: "qr-reciclame.firebaseapp.com",
+      projectId: "qr-reciclame",
+      storageBucket: "qr-reciclame.firebasestorage.app",
+      messagingSenderId: "801108546220",
+      appId: "1:801108546220:web:f8519a5596dc0ef0384509"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Referencia al documento de contadores en Firestore
+    const countersRef = doc(db, "metrics", "counters");
+
+    // Referencias a elementos del DOM
+    const visitsSpan = document.getElementById("visits-count");
+    const googleSpan = document.getElementById("google-count");
+    const appleSpan = document.getElementById("apple-count");
+    const btnGoogle = document.getElementById("btn-google");
+    const btnApple = document.getElementById("btn-apple");
+
+    // Objeto para llevar los valores en memoria
+    let currentCounts = { visits: 0, google: 0, apple: 0 };
+
+    async function initCounters() {
+      try {
+        const snap = await getDoc(countersRef);
+
+        if (!snap.exists()) {
+          // Si no existe el documento, lo creamos con contadores a 0
+          await setDoc(countersRef, {
+            visits: 0,
+            google: 0,
+            apple: 0
+          });
+          currentCounts = { visits: 0, google: 0, apple: 0 };
+        } else {
+          currentCounts = snap.data();
+        }
+
+        // Al cargar la página, incrementamos visitas
+        await updateDoc(countersRef, {
+          visits: increment(1)
+        });
+
+        // Actualizamos los valores visibles (sumamos 1 al local de visitas)
+        currentCounts.visits = (currentCounts.visits || 0) + 1;
+
+        visitsSpan.textContent = currentCounts.visits;
+        googleSpan.textContent = currentCounts.google || 0;
+        appleSpan.textContent = currentCounts.apple || 0;
+
+      } catch (error) {
+        console.error("Error inicializando contadores:", error);
+        visitsSpan.textContent = "Error";
+        googleSpan.textContent = "Error";
+        appleSpan.textContent = "Error";
+      }
+    }
+
+    async function incrementField(field) {
+      try {
+        await updateDoc(countersRef, {
+          [field]: increment(1)
+        });
+      } catch (error) {
+        console.error("Error incrementando campo", field, error);
+      }
+    }
+
+    // Listeners de los botones
+    if (btnGoogle) {
+      btnGoogle.addEventListener("click", () => {
+        // Incrementamos contador en Firestore
+        incrementField("google");
+        // Actualizamos el valor mostrado sin esperar respuesta
+        currentCounts.google = (currentCounts.google || 0) + 1;
+        googleSpan.textContent = currentCounts.google;
+      });
+    }
+
+    if (btnApple) {
+      btnApple.addEventListener("click", () => {
+        incrementField("apple");
+        currentCounts.apple = (currentCounts.apple || 0) + 1;
+        appleSpan.textContent = currentCounts.apple;
+      });
+    }
+
+    // Iniciar lógica al cargar la página
+    initCounters();
+  </script>
 </body>
 </html>
